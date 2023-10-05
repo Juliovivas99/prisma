@@ -1,0 +1,75 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Trainer {
+  id              Int            @id @default(autoincrement())
+  name            String         @db.VarChar(255) 
+  Tasks           Task[]
+  UserPreferences UserPreferences[]
+  @@unique([id, name])
+}
+
+model Task {
+  id               String  @id @default(cuid())
+  trainer          Trainer @relation(fields: [trainerId], references: [id])
+  order            Int  //daily goal 
+  trainerId        Int
+  title            String @db.Text//daily goal prompt
+  shortDescription String @db.Text
+  longDescription  String @db.Text
+  improvementArea  String //desired outcome //improvment typo
+
+  TaskToUser TaskToUser[]
+
+  @@unique([trainerId, order, improvementArea])
+}
+
+model TaskToUser {
+  id          String   @id @default(cuid())
+  Task        Task     @relation(fields: [taskId], references: [id])
+  taskId      String
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String
+  completedAt DateTime
+
+  @@unique([taskId, userId])
+}
+
+model UserPreferences {
+  id              String  @id @unique @default(cuid())
+  focusArea       String //linore will ssend str
+  improvmentArea String //desired outcome 
+  trainer         Trainer @relation(fields: [trainerId], references: [id])
+  trainerId       Int
+  user            User    @relation(fields: [userId], references: [id])
+  userId          String  @unique
+
+  @@unique([trainerId, userId])
+}
+
+model PersonalInformation {
+  user      User    @relation(fields: [userId], references: [id])
+  userId    String  @id @unique
+  email     String
+  firstName String
+  lastName  String?
+  age       Int?
+  gender    String?
+}
+
+model User {
+  id                  String               @id @db.VarChar(255)
+  Tasks               TaskToUser[]
+  startDate           DateTime             @default(now())
+  userPreferences     UserPreferences?
+  personalInformation PersonalInformation?
+}
